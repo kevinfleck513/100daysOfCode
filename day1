@@ -1,0 +1,34 @@
+// Apex Specialist Trailhead Superbadge
+// MaintenanceRequestHelper.apxc
+// by Kevin Fleck, 2.4.2019
+public class MaintenanceRequestHelper {
+    
+    public static void updateWorkOrders(){
+        List<Case> maintList = [SELECT Id, Vehicle__c, Contact.LastName, ContactId, Equipment__c, Equipment__r.Maintenance_Cycle__c, Type, Status FROM Case WHERE Id IN :Trigger.New];
+        if(maintList != null && maintList.size()>0){
+            List <Case> insertMaintList = getCasesList(maintList);
+            insert insertMaintList;
+        }
+    }
+    
+    public Static List<case> getCasesList(List<Case> maintList){
+        List<Case> newMaintList = new List<Case>();
+        for (Case c : maintList){
+            if (c.Type == 'Routine Maintenance' && c.Status == 'Closed'){
+                Case newMaintReq = new Case();
+                newMaintReq.Subject = c.Contact.LastName+' Routine Maintenance '+date.TODAY().addDays(Integer.valueOf(c.Equipment__r.Maintenance_Cycle__c));
+                newMaintReq.Type = 'Routine Maintenance';
+                newMaintReq.ContactId = c.ContactId;
+                newMaintReq.Vehicle__c = c.Vehicle__c;
+                newMaintReq.Equipment__c = c.Equipment__c;
+                newMaintReq.Date_Reported__c = date.TODAY();
+                newMaintReq.date_due__c = date.TODAY().addDays(Integer.valueOf(c.Equipment__r.Maintenance_Cycle__c));
+                newMaintReq.Status = 'New';
+                newMaintReq.Origin = 'Phone';
+                newMaintList.add(newMaintReq);
+            }
+        }
+        return newMaintList;
+    }
+    
+}
